@@ -7,12 +7,20 @@ const DEFAULT_METHOD = 'get';
 
 class App {
   constructor(options) {
-    this._options = options;
+    this._options = options || {};
     this._settings = {};
     this._routes = [];
     this._errorRoutes = [];
     this._window;
     this._root = null;
+  }
+
+  get suppressClickLogging() {
+    return this._options.suppressClickLogging || false;
+  }
+
+  set suppressClickLogging(value) {
+    this._options.suppressClickLogging = value;
   }
 
   _getMiddlewareFor(method, path) {
@@ -209,6 +217,51 @@ class App {
   }
 
   /**
+   * Trap all click operations from internal anchors so that they instead
+   * get pushed into history and handled by the router.
+   */
+  _internalAnchorClickTrapHandler(opt_event) {
+    const event = opt_event || this._window && this._window.event;
+    let element = event.target || event.srcElement;
+    const win = event.ownerDocument.defaultView || this._window;
+
+    element = this._nearestAnchor(element);
+
+    // Bail if we don't have an element or a window.
+    if (!element || !win) {
+      return;
+    }
+
+    if (element.host === win.location.host) {
+      const pathname = element.pathname;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      win.history.pushState(null, null, pathname);
+      if (!this.suppressClickLogging) {
+        console.log('NOTE: nomplate-router has captured and blocked an internal-path anchor click for:', element);
+        console.log('To suppress this log statement send {suppressClickLogging: true} as an app creation option.');
+      }
+    }
+  }
+
+  /**
+   * Get the closes anchor to an element that was clicked.
+   */
+  _nearestAnchor(element) {
+    const doc = element.ownerDocument;
+
+    while (element && element !== doc) {
+      if (element instanceof HTMLAnchorElement) {
+        return element;
+      }
+
+      element = element.parentElement;
+    }
+
+    return null;
+  }
+
+  /**
    * Begin listening for route changes on the provided window object.
    */
   listen(win, optRoot) {
@@ -221,6 +274,8 @@ class App {
     this._window = this._updateHistory(win);
     this._root = optRoot;
 
+    // Trap all internal anchor click events.
+    this._window.document.addEventListener('click', this._internalAnchorClickTrapHandler.bind(this), true);
     this._execute(this._window.location);
   }
 
