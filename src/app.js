@@ -23,6 +23,10 @@ class App {
     this._options.suppressClickLogging = value;
   }
 
+  get isElectron() {
+    return this._options.isElectron || false;
+  }
+
   _getMiddlewareFor(method, path) {
     return this._routes.filter((route) => {
       return !!route.handles(method, path);
@@ -151,8 +155,7 @@ class App {
   /**
    * Execute middleware for the provided path and method.
    */
-  execute(loc) {
-    const path = loc.pathname;
+  execute(path) {
     const req = new Request(this, path, this._window);
     const res = new Response(this, path, this._window);
 
@@ -206,7 +209,7 @@ class App {
         original.call(hist, state, title, url);
         // win.location.replace(url);
         // console.log(Object.keys(win.location.__proto__));
-        app.execute(win.location);
+        app.execute(win.location.pathname);
       };
     };
 
@@ -223,7 +226,7 @@ class App {
   _internalAnchorClickTrapHandler(opt_event) {
     const event = opt_event || this._window && this._window.event;
     let element = event.target || event.srcElement;
-    const win = event.ownerDocument.defaultView || this._window;
+    const win = event.target.ownerDocument.defaultView || this._window;
 
     element = this._nearestAnchor(element);
 
@@ -236,11 +239,19 @@ class App {
       const pathname = element.pathname;
       event.preventDefault();
       event.stopImmediatePropagation();
-      win.history.pushState(null, null, pathname);
+
+      if (this.isElectron) {
+        this.execute(pathname);
+      } else {
+        win.history.pushState(null, null, pathname);
+      }
+
       if (!this.suppressClickLogging) {
-        console.log('NOTE: nomplate-router has captured and blocked an internal-path anchor click for:', element);
+        console.log('WARNING: nomplate-router has captured and blocked an internal-path anchor click for:', element.outerHTML);
         console.log('To suppress this log statement send {suppressClickLogging: true} as an app creation option.');
       }
+      // Block the event.
+      return false;
     }
   }
 
@@ -276,10 +287,8 @@ class App {
 
     // Trap all internal anchor click events.
     this._window.document.addEventListener('click', this._internalAnchorClickTrapHandler.bind(this), true);
-
-    // Don't auto-execute if we're not running from a web host (e.g., Electron app)
     if (this._window.location.href.indexOf('file://') !== 0) {
-      this.execute(this._window.location);
+      this.execute(this._window.location.pathname);
     }
   }
 
@@ -313,4 +322,5 @@ class App {
 }
 
 module.exports = App;
+
 
