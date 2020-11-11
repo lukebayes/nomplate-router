@@ -276,7 +276,9 @@ class App {
 
     // Trap all internal anchor click events.
     this._window.document.addEventListener('click', this._internalAnchorClickTrapHandler.bind(this), true);
-    if (this._window.location.pathname.indexOf('file://') !== 0) {
+
+    // Don't auto-execute if we're not running from a web host (e.g., Electron app)
+    if (this._window.location.href.indexOf('file://') !== 0) {
       this.execute(this._window.location);
     }
   }
