@@ -151,7 +151,7 @@ class App {
   /**
    * Execute middleware for the provided path and method.
    */
-  _execute(loc) {
+  execute(loc) {
     const path = loc.pathname;
     const req = new Request(this, path, this._window);
     const res = new Response(this, path, this._window);
@@ -206,7 +206,7 @@ class App {
         original.call(hist, state, title, url);
         // win.location.replace(url);
         // console.log(Object.keys(win.location.__proto__));
-        app._execute(win.location);
+        app.execute(win.location);
       };
     };
 
@@ -264,19 +264,21 @@ class App {
   /**
    * Begin listening for route changes on the provided window object.
    */
-  listen(win, optRoot) {
+  listen(win, rootElement) {
     if (!win) {
       throw new Error('listen requires a reference to a Window object');
     }
-    if (!optRoot) {
+    if (!rootElement) {
       throw new Error('Must provide a root element for display rendering');
     }
     this._window = this._updateHistory(win);
-    this._root = optRoot;
+    this._root = rootElement;
 
     // Trap all internal anchor click events.
     this._window.document.addEventListener('click', this._internalAnchorClickTrapHandler.bind(this), true);
-    this._execute(this._window.location);
+    if (this._window.location.pathname.indexOf('file://') !== 0) {
+      this.execute(this._window.location);
+    }
   }
 
   _executeView(input) {
