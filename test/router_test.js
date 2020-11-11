@@ -4,8 +4,8 @@ const sinon = require('sinon');
 const testHelper = require('nomplate/test_helper');
 const renderElement = require('nomplate').renderElement;
 
-describe('Router App', () => {
-  let app, win, root, doc;
+describe('Router Test', () => {
+  let instance, win, root, doc;
 
   const abcdView = sinon.spy((options) => {
     const element = doc.createElement('div');
@@ -29,8 +29,8 @@ describe('Router App', () => {
     root.textContent = 'root';
     doc.body.appendChild(root);
 
-    app = router();
-    app.set('views', {
+    instance = router();
+    instance.set('views', {
       abcd: abcdView,
       efgh: efghView,
     });
@@ -38,12 +38,12 @@ describe('Router App', () => {
 
   describe('api', () => {
     it('has expected handles', () => {
-      assert(app.delete);
-      assert(app.get);
-      assert(app.post);
-      assert(app.put);
-      assert(app.set);
-      assert(app.use);
+      assert(instance.delete);
+      assert(instance.get);
+      assert(instance.post);
+      assert(instance.put);
+      assert(instance.set);
+      assert(instance.use);
     });
   });
 
@@ -53,11 +53,11 @@ describe('Router App', () => {
       const one = sinon.spy();
       const two = sinon.spy();
 
-      app.get('/abcd', one);
-      app.get('/efgh', two);
+      instance.get('/abcd', one);
+      instance.get('/efgh', two);
 
       win.setUrl('/efgh');
-      app.listen(win, root);
+      instance.listen(win, root);
 
       assert.equal(one.callCount, 0);
       assert.equal(two.callCount, 1);
@@ -70,13 +70,13 @@ describe('Router App', () => {
 
       const routeHandler = sinon.spy();
 
-      app.get('/abcd', routeHandler).listen(win, root);
+      instance.get('/abcd', routeHandler).listen(win, root);
       assert.equal(routeHandler.callCount, 1);
       const call = routeHandler.getCall(0);
       const req = call.args[0];
       const res = call.args[1];
 
-      assert.equal(req.app, app);
+      assert.equal(req.app, instance);
       assert(req.body);
       done();
     });
@@ -92,7 +92,7 @@ describe('Router App', () => {
 
       const routeHandler = sinon.spy((req, res) => {
         // Verify request
-        assert.equal(req.app, app);
+        assert.equal(req.app, instance);
         assert.equal(req.cookies.secret, 'do not tell you 10%');
         assert.equal(req.cookies.last_visit, '1225445171794');
         assert.equal(req.hostname, 'abcd.com');
@@ -102,7 +102,7 @@ describe('Router App', () => {
         assert.equal(req.query['ij kl'], '56 78');
 
         // Verify response
-        assert.equal(res.app, app);
+        assert.equal(res.app, instance);
         assert.equal(Object.keys(res.locals).length, 0);
         res.cookie('ab cd', 'ef gh');
         assert.equal(win.document.cookie, encodedCookie + ';ab%20cd=ef%20gh');
@@ -113,7 +113,7 @@ describe('Router App', () => {
         assert.equal(result, res);
       });
 
-      app.get('/abcd', routeHandler).listen(win, root);
+      instance.get('/abcd', routeHandler).listen(win, root);
     });
 
     it('applies route params to request', () => {
@@ -121,10 +121,10 @@ describe('Router App', () => {
 
       const one = sinon.spy();
       const two = sinon.spy();
-      app.get('/abcd/:one/:two', one);
-      app.get('/efgh', two);
+      instance.get('/abcd/:one/:two', one);
+      instance.get('/efgh', two);
 
-      app.listen(win, root);
+      instance.listen(win, root);
 
       assert.equal(one.callCount, 1);
       const callArgs = one.getCall(0).args;
@@ -140,8 +140,8 @@ describe('Router App', () => {
       const two = sinon.spy();
       const three = sinon.spy();
 
-      app.get('/abcd/efgh', [one, two, three]);
-      app.listen(win, root);
+      instance.get('/abcd/efgh', [one, two, three]);
+      instance.listen(win, root);
 
       assert.equal(one.callCount, 1);
       assert.equal(two.callCount, 1);
@@ -156,11 +156,11 @@ describe('Router App', () => {
       const three = sinon.spy();
       const four = sinon.spy();
 
-      app.use(one)
-      app.use(two);
-      app.get('/abcd', three);
-      app.get('/efgh', four);
-      app.listen(win, root);
+      instance.use(one)
+      instance.use(two);
+      instance.get('/abcd', three);
+      instance.get('/efgh', four);
+      instance.listen(win, root);
 
       assert.equal(one.callCount, 1);
       assert.equal(two.callCount, 1);
@@ -175,8 +175,8 @@ describe('Router App', () => {
       const two = sinon.spy();
       const three = sinon.spy();
 
-      app.use(one, two, three);
-      app.listen(win, root);
+      instance.use(one, two, three);
+      instance.listen(win, root);
 
       assert.equal(one.callCount, 1);
       assert.equal(two.callCount, 1);
@@ -190,8 +190,8 @@ describe('Router App', () => {
       const two = sinon.spy();
       const three = sinon.spy();
 
-      app.use([one, two, three]);
-      app.listen(win, root);
+      instance.use([one, two, three]);
+      instance.listen(win, root);
 
       assert.equal(one.callCount, 1);
       assert.equal(two.callCount, 1);
@@ -203,8 +203,8 @@ describe('Router App', () => {
       const one = (req, res, next) => {};
       const two = sinon.spy();
 
-      app.use(one, two);
-      app.listen(win, root);
+      instance.use(one, two);
+      instance.listen(win, root);
 
       assert.equal(two.callCount, 0, 'One never ended');
     });
@@ -232,8 +232,8 @@ describe('Router App', () => {
         });
       });
 
-      app.use(one, two, three);
-      app.listen(win, root);
+      instance.use(one, two, three);
+      instance.listen(win, root);
 
       assert.equal(one.callCount, 1);
       assert.equal(two.callCount, 0);
@@ -256,8 +256,8 @@ describe('Router App', () => {
         done();
       });
 
-      app.use(one, two);
-      app.listen(win, root);
+      instance.use(one, two);
+      instance.listen(win, root);
 
       assert.equal(one.callCount, 1);
       assert.equal(two.callCount, 0);
@@ -268,11 +268,11 @@ describe('Router App', () => {
     it('renders a view', () => {
       win.setUrl('/abcd');
 
-      app.get('/abcd', (req, res) => {
+      instance.get('/abcd', (req, res) => {
         res.render('abcd', {bar: 'efgh'});
       });
 
-      app.listen(win, root);
+      instance.listen(win, root);
 
       const viewElement = doc.getElementById('abcd');
       assert(viewElement, 'Expected a view element');
@@ -281,15 +281,15 @@ describe('Router App', () => {
     it('replaces with multiple views', () => {
       win.setUrl('/abcd');
 
-      app.get('/abcd', (req, res) => {
+      instance.get('/abcd', (req, res) => {
         res.render('abcd', {foo: 'abcd'});
       });
 
-      app.get('/efgh', (req, res) => {
+      instance.get('/efgh', (req, res) => {
         res.render('efgh', {bar: 'efgh'});
       });
 
-      app.listen(win, root);
+      instance.listen(win, root);
 
       assert.equal(doc.body.textContent, 'Hello World: abcd');
 
@@ -310,31 +310,31 @@ describe('Router App', () => {
   describe('handlers types', () => {
     ['get', 'put', 'post', 'delete', 'all'].forEach((method) => {
       it(`works with ${method}`, () => {
-        app[method]('/abcd', sinon.spy());
+        instance[method]('/abcd', sinon.spy());
       });
     });
   });
 
   describe('settings', () => {
     it('sets and gets', () => {
-      app.set('abcd', 1234);
-      assert.equal(app.get('abcd'), 1234);
+      instance.set('abcd', 1234);
+      assert.equal(instance.get('abcd'), 1234);
     });
 
     it('disables unknown setting', () => {
-      app.disable('abcd');
-      assert.equal(app.get('abcd'), false);
+      instance.disable('abcd');
+      assert.equal(instance.get('abcd'), false);
     });
 
     it('enables unknown setting', () => {
-      app.enable('abcd');
-      assert.equal(app.get('abcd'), true);
+      instance.enable('abcd');
+      assert.equal(instance.get('abcd'), true);
     });
 
     it('returns boolean setting at enabled', () => {
-      assert.equal(app.enabled('abcd'), false);
-      app.enable('abcd');
-      assert.equal(app.enabled('abcd'), true);
+      assert.equal(instance.enabled('abcd'), false);
+      instance.enable('abcd');
+      assert.equal(instance.enabled('abcd'), true);
     });
   });
 });

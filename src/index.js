@@ -1,18 +1,18 @@
-const App = require('./app');
+const Router = require('./router');
 const Iterator = require('./iterator');
 const Request = require('./request');
 const Response = require('./response');
 const Route = require('./route');
 
-function createApp(options) {
-  return new App(options);
+function create(options) {
+  return new Router(options);
 };
 
-createApp.App = App;
-createApp.Iterator = Iterator;
-createApp.Request = Request;
-createApp.Response = Response;
-createApp.Route = Route;
+create.Router = Router;
+create.Iterator = Iterator;
+create.Request = Request;
+create.Response = Response;
+create.Route = Route;
 
-module.exports = createApp;
+module.exports = create;
 
