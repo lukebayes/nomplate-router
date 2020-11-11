@@ -23,8 +23,8 @@ class App {
     this._options.suppressClickLogging = value;
   }
 
-  get isElectron() {
-    return this._options.isElectron || false;
+  get useRawPaths() {
+    return this._options.useRawPaths;
   }
 
   _getMiddlewareFor(method, path) {
@@ -155,12 +155,12 @@ class App {
   /**
    * Execute middleware for the provided path and method.
    */
-  execute(path) {
-    const req = new Request(this, path, this._window);
-    const res = new Response(this, path, this._window);
+  execute(pathname) {
+    const req = new Request(this, pathname, this._window);
+    const res = new Response(this, pathname, this._window);
 
     // Use an external iterator so that async handlers will work.
-    const itr = new Iterator(this._getMiddlewareFor(req.method, path));
+    const itr = new Iterator(this._getMiddlewareFor(req.method, pathname));
     this._executeNext(itr, req, res);
   }
 
@@ -226,7 +226,7 @@ class App {
   _internalAnchorClickTrapHandler(opt_event) {
     const event = opt_event || this._window && this._window.event;
     let element = event.target || event.srcElement;
-    const win = event.target.ownerDocument.defaultView || this._window;
+    const win = element.ownerDocument.defaultView || this._window;
 
     element = this._nearestAnchor(element);
 
@@ -239,18 +239,17 @@ class App {
       const pathname = element.pathname;
       event.preventDefault();
       event.stopImmediatePropagation();
-
-      if (this.isElectron) {
+      if (this.useRawPaths) {
         this.execute(pathname);
       } else {
         win.history.pushState(null, null, pathname);
       }
 
       if (!this.suppressClickLogging) {
-        console.log('WARNING: nomplate-router has captured and blocked an internal-path anchor click for:', element.outerHTML);
+        console.log('NOTE: nomplate-router has captured and blocked an internal-path anchor click for:', element);
         console.log('To suppress this log statement send {suppressClickLogging: true} as an app creation option.');
       }
-      // Block the event.
+
       return false;
     }
   }
@@ -287,7 +286,9 @@ class App {
 
     // Trap all internal anchor click events.
     this._window.document.addEventListener('click', this._internalAnchorClickTrapHandler.bind(this), true);
-    if (this._window.location.href.indexOf('file://') !== 0) {
+    if (this.useRawPaths) {
+      this.execute('/');
+    } else {
       this.execute(this._window.location.pathname);
     }
   }
