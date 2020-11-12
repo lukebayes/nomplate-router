@@ -1,6 +1,8 @@
 # Nomplate Router
 A tiny (~2.4k gzipped) middleware for building rich client applications, especially with Nomplate.
 
+NOTE: This is very much a work in progress, and is not recommended for production use.
+
 # Getting started
 ```bash
 mkdir nomplate-router
