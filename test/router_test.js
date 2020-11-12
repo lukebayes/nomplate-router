@@ -413,5 +413,20 @@ describe('Router Test', () => {
       instance.execute('/abcd');
       assert.equal(root[2], 'rendered: 1234');
     });
+
+    it('redirects to a new path', () => {
+      instance.get('/ijkl', (req, res) => {
+        res.redirect('/efgh');
+      });
+
+      // Only the initial route has executed.
+      assert.equal(root.length, 1);
+      assert.equal(root[0], 'rendered: 1234');
+      // We execute a route that redirects.
+      instance.execute('/ijkl');
+      // Verify that only the redirected route executed.
+      assert.equal(root.length, 2);
+      assert.equal(root[1], 'rendered: 5678');
+    });
   });
 });

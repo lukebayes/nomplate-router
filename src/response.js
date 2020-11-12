@@ -53,19 +53,9 @@ class Response {
     return this;
   }
 
-  redirect(optStatusOrPath, optPath) {
-    let status, path;
-    if (typeof(optStatusOrPath) === 'number') {
-      status = optStatusOrPath;
-      path = optPath;
-    } else {
-      status = DEFAULT_STATUS;
-      path = optStatusOrPath;
-    }
-
+  redirect(path) {
     this.end();
-
-    throw new Error('Not yet implemented');
+    this.routes.execute(path);
 
     return this;
   }
