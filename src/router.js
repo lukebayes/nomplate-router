@@ -2,29 +2,48 @@ const Iterator = require('./iterator');
 const Request = require('./request');
 const Response = require('./response');
 const Route = require('./route');
+const domRenderer = require('./render_helpers').domRenderer;
+const windowHelper = require('./render_helpers').windowHelper;
 
 const DEFAULT_METHOD = 'get';
 
-class App {
+const DEFAULT_OPTIONS = {
+  renderer: domRenderer,
+  root: null,
+  suppressClickLogging: false,
+};
+
+/**
+ * Primary coordinator for routing services.
+ */
+class Router {
   constructor(options) {
-    this._options = options || {};
+    this._options = Object.assign(options || {}, DEFAULT_OPTIONS);
     this._settings = {};
     this._routes = [];
     this._errorRoutes = [];
     this._window;
-    this._root = null;
+    this._rootContext = null;
+  }
+
+  get renderer() {
+    return this._options.renderer;
+  }
+
+  get rootContext() {
+    return this._rootContext;
   }
 
   get suppressClickLogging() {
-    return this._options.suppressClickLogging || false;
+    return this._options.suppressClickLogging;
   }
 
   set suppressClickLogging(value) {
     this._options.suppressClickLogging = value;
   }
 
-  get useRawPaths() {
-    return this._options.useRawPaths;
+  get window() {
+    return this._window;
   }
 
   _getMiddlewareFor(method, path) {
@@ -156,8 +175,8 @@ class App {
    * Execute middleware for the provided path and method.
    */
   execute(pathname) {
-    const req = new Request(this, pathname, this._window);
-    const res = new Response(this, pathname, this._window);
+    const req = new Request(this, pathname, this.window);
+    const res = new Response(this, pathname, this.window);
 
     // Use an external iterator so that async handlers will work.
     const itr = new Iterator(this._getMiddlewareFor(req.method, pathname));
@@ -193,110 +212,24 @@ class App {
   }
 
   /**
-   * We don't have any notifications when the history state is changed,
-   * so we need to override history.pushState and history.replaceState
-   * with custom methods that will update our current route, and call
-   * the appropriate handler whenever these methods are called.
-   */
-  _updateHistory(win) {
-    const hist = win.history;
-    const _pushState = hist.pushState;
-    const _replaceState = hist.replaceState;
-    const app = this;
-
-    function wrapper(original) {
-      return function(state, title, url) {
-        original.call(hist, state, title, url);
-        // win.location.replace(url);
-        // console.log(Object.keys(win.location.__proto__));
-        app.execute(win.location.pathname);
-      };
-    };
-
-    hist.pushState = wrapper(_pushState);
-    hist.replaceState = wrapper(_replaceState);
-
-    return win;
-  }
-
-  /**
-   * Trap all click operations from internal anchors so that they instead
-   * get pushed into history and handled by the router.
-   */
-  _internalAnchorClickTrapHandler(opt_event) {
-    const event = opt_event || this._window && this._window.event;
-    let element = event.target || event.srcElement;
-    const win = element.ownerDocument.defaultView || this._window;
-
-    element = this._nearestAnchor(element);
-
-    // Bail if we don't have an element or a window.
-    if (!element || !win) {
-      return;
-    }
-
-    if (element.host === win.location.host) {
-      const pathname = element.pathname;
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      if (this.useRawPaths) {
-        this.execute(pathname);
-      } else {
-        win.history.pushState(null, null, pathname);
-      }
-
-      if (!this.suppressClickLogging) {
-        console.log('NOTE: nomplate-router has captured and blocked an internal-path anchor click for:', element);
-        console.log('To suppress this log statement send {suppressClickLogging: true} as an app creation option.');
-      }
-
-      return false;
-    }
-  }
-
-  /**
-   * Get the closes anchor to an element that was clicked.
-   */
-  _nearestAnchor(element) {
-    const doc = element.ownerDocument;
-
-    while (element && element !== doc) {
-      if (element instanceof HTMLAnchorElement) {
-        return element;
-      }
-
-      element = element.parentElement;
-    }
-
-    return null;
-  }
-
-  /**
    * Begin listening for route changes on the provided window object.
    */
-  listen(win, rootElement) {
-    if (!win) {
-      throw new Error('listen requires a reference to a Window object');
+  listen(rootContext, win) {
+    if (!rootContext) {
+      throw new Error('Must provide a rootContext that will be passed to the renderer.');
     }
-    if (!rootElement) {
-      throw new Error('Must provide a root element for display rendering');
-    }
-    this._window = this._updateHistory(win);
-    this._root = rootElement;
+    this._rootContext = rootContext;
+    this._window = windowHelper(this, win);
 
-    // Trap all internal anchor click events.
-    this._window.document.addEventListener('click', this._internalAnchorClickTrapHandler.bind(this), true);
-    if (this.useRawPaths) {
-      this.execute('/');
-    } else {
-      this.execute(this._window.location.pathname);
+    if (win) {
+      this.execute(win.location.pathname);
     }
   }
 
   _executeView(input) {
     if (this._settings['view engine']) {
       const engine = this._settings['view engine'];
-      return engine(input, this._window.document);
+      return engine(input, this.window.document);
     }
 
     return input;
@@ -306,22 +239,18 @@ class App {
    * Render the view registerd at name with the provided locals.
    */
   render(viewName, optLocals, callback) {
-    const view = this._settings['views'][viewName];
-    if (!view) {
-      throw new Error(`No view registered at ${viewName}, need to provide it to app.set('views', {"${viewName}": viewFunc});`);
+    const viewHandler = this._settings['views'][viewName];
+    if (!viewHandler) {
+      throw new Error(`No viewHandler registered at ${viewName}, need to provide it to routes.set('views', {"${viewName}": viewFunc});`);
     }
 
-    const locals = Object.assign({settings: this._settings}, optLocals);
-    const element = this._executeView(view(locals));
+    const locals = Object.assign({router: this, settings: this._settings}, optLocals);
+    const renderedView = this._executeView(viewHandler(locals));
 
-    // TODO(lbayes): We should explode if either of these are missing.
-    if (this._root && element) {
-      this._root.innerHTML = '';
-      this._root.appendChild(element);
-    }
+    return this.renderer(this.rootContext, viewName, renderedView);
   }
 }
 
-module.exports = App;
+module.exports = Router;
 
 
