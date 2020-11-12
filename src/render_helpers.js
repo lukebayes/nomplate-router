@@ -1,6 +1,26 @@
 const StubWindow = require('./stub_window');
 
 /**
+ * Transform a location, URL, href or path into a URL object.
+ */
+function urlFromString(urlPathOrLocation) {
+  let url;
+  if (typeof urlPathOrLocation === 'string') {
+    if (urlPathOrLocation.indexOf('://') > -1) {
+      url = new URL(urlPathOrLocation).pathname;
+    } else {
+      // Ensure our leading slash is present and singular.
+      const part = urlPathOrLocation.indexOf('/') !== 0 ? `/${urlPathOrLocation}` : urlPathOrLocation;
+      url = new URL(`http://example.com${part}`);
+    }
+  } else {
+    url = urlPathOrLocation;
+  }
+
+  return url;
+}
+
+/**
  * This is a default, brute force dom renderer that will simply clobber
  * all children of the root element with whatever tree was returned by
  * the rendering engine.
@@ -8,7 +28,7 @@ const StubWindow = require('./stub_window');
  * More efficient and completely different renderers can be provided
  * to the router as a configuration option.
  */
-function domRenderer(root, viewName, renderedView) {
+function domRenderer(viewName, renderedView, root) {
   if (!root) {
     throw new Error('Cannot render a view without a root element');
   }
@@ -89,9 +109,8 @@ function modifyWindowHistory(router, win) {
   function wrapper(original) {
     return function(state, title, url) {
       original.call(hist, state, title, url);
-      // win.location.replace(url);
-      // console.log(Object.keys(win.location.__proto__));
-      router.execute(win.location.pathname);
+      win.location.replace(url);
+      router.execute(win.location);
     };
   };
 
@@ -128,6 +147,7 @@ function windowHelper(router, win) {
 
 module.exports = {
   domRenderer,
-  windowHelper,
   modifyWindowHistory,
+  urlFromString,
+  windowHelper,
 };

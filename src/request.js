@@ -1,28 +1,35 @@
+const urlFromString = require('./render_helpers').urlFromString;
 
 class Request {
-  constructor(app, path, win) {
+  constructor(routes, url, win, opt_method) {
     this._window = win;
-    const loc = win.location;
+    if (typeof url === 'string') {
+      url = urlFromString(url);
+    }
 
-    this.app = app;
+    this.routes = routes;
     this.body = {};
     this.cookies = this._getCookies();
-    this.hostname = loc.hostname;
-    this.originalUrl = loc.url;
-    this.path = loc.pathname;
-    this.protocol = loc.protocol;
-    this.query = this._getQuery();
-    this.method = this.query._method || 'get';
+    this.hostname = url.hostname;
+    this.originalUrl = url.href;
+    this.path = url.pathname;
+    this.protocol = url.protocol;
+    this.query = this._getQuery(url.search);
+    this.method = opt_method || this.query._method || 'get';
     this.params = {};
   }
 
+  get window() {
+    return this._window;
+  }
+
   _getCookies() {
-    const pairs = (this._window.document.cookie || '').split(';');
+    const pairs = (this.window && this.window.document.cookie || '').split(';');
     return this._parseEncodedPairs(pairs);
   }
 
-  _getQuery() {
-    const pairs = this._window.location.search.slice(1).split('&');
+  _getQuery(search) {
+    const pairs = search.slice(1).split('&');
     return this._parseEncodedPairs(pairs);
   }
 

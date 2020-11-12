@@ -4,6 +4,7 @@ const Response = require('./response');
 const Route = require('./route');
 const domRenderer = require('./render_helpers').domRenderer;
 const windowHelper = require('./render_helpers').windowHelper;
+const urlFromString = require('./render_helpers').urlFromString;
 
 const DEFAULT_METHOD = 'get';
 
@@ -18,7 +19,7 @@ const DEFAULT_OPTIONS = {
  */
 class Router {
   constructor(options) {
-    this._options = Object.assign(options || {}, DEFAULT_OPTIONS);
+    this._options = Object.assign(DEFAULT_OPTIONS, options || {});
     this._settings = {};
     this._routes = [];
     this._errorRoutes = [];
@@ -27,7 +28,7 @@ class Router {
   }
 
   get renderer() {
-    return this._options.renderer;
+    return this._settings.renderer || this._options.renderer;
   }
 
   get rootContext() {
@@ -46,9 +47,9 @@ class Router {
     return this._window;
   }
 
-  _getMiddlewareFor(method, path) {
+  _getMiddlewareFor(method, url) {
     return this._routes.filter((route) => {
-      return !!route.handles(method, path);
+      return !!route.handles(method, url.pathname || url);
     });
   }
 
@@ -104,6 +105,13 @@ class Router {
   }
 
   _pushRoute(method, path, handlers) {
+    if (Array.isArray(path)) {
+      path.forEach((p) => {
+        this._pushRoute(method, p, handlers);
+      });
+      return;
+    }
+
     if (handlers && handlers.length === 1 && Array.isArray(handlers[0])) {
       handlers = handlers[0];
     }
@@ -174,12 +182,15 @@ class Router {
   /**
    * Execute middleware for the provided path and method.
    */
-  execute(pathname) {
-    const req = new Request(this, pathname, this.window);
-    const res = new Response(this, pathname, this.window);
+  execute(urlPathOrLocation, opt_method) {
+    // Transform a location, URL, href or path into a URL object.
+    const url = urlFromString(urlPathOrLocation);
+    const req = new Request(this, url, this.window, opt_method);
+    const res = new Response(this, url, this.window);
 
+    // console.log('Router.execute with:', req.method, url.href);
     // Use an external iterator so that async handlers will work.
-    const itr = new Iterator(this._getMiddlewareFor(req.method, pathname));
+    const itr = new Iterator(this._getMiddlewareFor(req.method, url));
     this._executeNext(itr, req, res);
   }
 
@@ -214,15 +225,14 @@ class Router {
   /**
    * Begin listening for route changes on the provided window object.
    */
-  listen(rootContext, win) {
-    if (!rootContext) {
-      throw new Error('Must provide a rootContext that will be passed to the renderer.');
-    }
-    this._rootContext = rootContext;
-    this._window = windowHelper(this, win);
+  listen(opt_rootContext, opt_win) {
+    this._rootContext = opt_rootContext;
+    this._window = windowHelper(this, opt_win);
 
-    if (win) {
-      this.execute(win.location.pathname);
+    if (opt_win) {
+      this.execute(opt_win.location);
+    } else {
+      this.execute('/');
     }
   }
 
@@ -247,7 +257,7 @@ class Router {
     const locals = Object.assign({router: this, settings: this._settings}, optLocals);
     const renderedView = this._executeView(viewHandler(locals));
 
-    return this.renderer(this.rootContext, viewName, renderedView);
+    return this.renderer(viewName, renderedView, this.rootContext);
   }
 }
 

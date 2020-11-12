@@ -1,21 +1,29 @@
 const DEFAULT_STATUS = 200;
 
 class Response {
-  constructor(app, path, win) {
-    this.app = app;
+  constructor(routes, url, win) {
+    this._routes = routes;
     this._window = win;
     this._isEnded = false;
     this._statusCode = null;
     this.locals = {};
   }
 
+  get window() {
+    return this._window;
+  }
+
   get isEnded() {
     return this._isEnded;
   }
 
+  get routes() {
+    return this._routes;
+  }
+
   render(view, optLocals, optCallback) {
     this.end();
-    return this.app.render(view, optLocals, optCallback);
+    return this.routes.render(view, optLocals, optCallback);
   }
 
   send(element) {
@@ -24,15 +32,15 @@ class Response {
   }
 
   clearCookie() {
-    this._window.document.cookie = '';
+    this.window.document.cookie = '';
   }
 
   cookie(key, value) {
     const str = `${escape(key)}=${escape(value)}`;
-    if (this._window.document.cookie !== '') {
-      this._window.document.cookie += `;${str}`;
+    if (this.window.document.cookie !== '') {
+      this.window.document.cookie += `;${str}`;
     } else {
-      this._window.document.cookie = str;
+      this.window.document.cookie = str;
     }
   }
 

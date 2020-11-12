@@ -1,49 +1,34 @@
 
-
 class StubLocation {
   constructor(win) {
     this._window = win;
     this._url = null;
+
+    this._defineUrlProperties();
   }
 
-  get href() {
-    return this._url.href;
-  }
-
-  get protocol() {
-    return this._url.protocol;
-  }
-
-  get username() {
-    return this._url.username;
-  }
-
-  get password() {
-    return this._url.password;
-  }
-
-  get host() {
-    return this._url.host;
-  }
-
-  get hostname() {
-    return this._url.hostname;
-  }
-
-  get port() {
-    return this._url.port;
-  }
-
-  get pathname() {
-    return this._url.pathname;
-  }
-
-  get search() {
-    return this._url.search;
-  }
-
-  get hash() {
-    return this._url.hash;
+  _defineUrlProperties() {
+    [
+      'href',
+      'protocol',
+      'username',
+      'password',
+      'host',
+      'hostname',
+      'port',
+      'pathname',
+      'search',
+      'hash',
+    ].forEach((name) => {
+      Object.defineProperty(this, name, {
+        get: () => {
+          return this._url[name];
+        },
+        set: (value) => {
+          this._url[name] = value;
+        },
+      });
+    });
   }
 
   assign(url) {
@@ -73,14 +58,29 @@ class StubDocument {
 class StubWindow {
   constructor(router) {
     this._router = router;
-    this._location = new StubLocation(this);
+    this.location = 'https://example.com';
     this.document = new StubDocument(this);
     this.event = null;
+    this.isStub = true;
   }
 
-  set location(href) {
+  setUrl(urlOrPath) {
+    this.location = urlOrPath;
+  }
+
+  set location(urlOrPath) {
+    let url;
+    // If the host is not included, we have a path.
+    if (urlOrPath && urlOrPath.indexOf('://') === -1) {
+      // Ensure our leading slash is present and singular.
+      const part = urlOrPath.indexOf('/') !== 0 ? `/${urlOrPath}` : urlOrPath;
+      url = `https://example.com${part}`;
+    } else {
+      url = urlOrPath;
+    }
+
     this._location = new StubLocation(this);
-    this._location.assign(href);
+    this._location.assign(url);
   }
 
   get location() {
