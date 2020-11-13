@@ -33,12 +33,23 @@ class Request {
     return this._parseEncodedPairs(pairs);
   }
 
+  _coerce(value) {
+    if (value === 'true') {
+      return true;
+    } else if (value === 'false') {
+      return false;
+    }
+    return value;
+  }
+
   _parseEncodedPairs(pairs) {
     const result = {};
     pairs.forEach((pair) => {
       if (pair !== '') {
         const parts = pair.split('=');
-        result[(unescape(parts[0]) + '').trim()] = unescape(parts.slice(1).join('='));
+        const key = (unescape(parts[0]) + '').trim();
+        const value = unescape(parts.slice(1).join('='));
+        result[key] = this._coerce(value);
       }
     });
     return result;
