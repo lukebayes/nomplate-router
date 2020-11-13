@@ -45,6 +45,9 @@ class Response {
   }
 
   end() {
+    if (this.isEnded) {
+      throw new Error('This response has already ended, cannot end again');
+    }
     this._isEnded = true;
   }
 
