@@ -10,7 +10,7 @@ PROJECT_NAME=nomplate-router
 
 # Nodejs
 # https://nodejs.org/dist/v10.9.0/node-v10.9.0-linux-x64.tar.xz
-NODE_VERSION=14.15.0
+NODE_VERSION=16.13.0
 NODE=lib/nodejs/bin/node
 NPM=lib/nodejs/bin/npm
 
@@ -22,8 +22,7 @@ NODE_MODULES_BIN=node_modules/.bin
 # Node utilities
 ESLINT=$(NODE_MODULES_BIN)/eslint
 MOCHA=$(NODE_MODULES_BIN)/_mocha
-WEBPACK=$(NODE_MODULES_BIN)/webpack
-WEBPACK_CLIENT_CONFIG=webpack-client.config.js
+ESBUILD=$(NODE_MODULES_BIN)/esbuild
 
 .PHONY: test test-w dev-install build build-module lint clean
 
@@ -47,10 +46,10 @@ publish: clean build
 	npm publish
 
 dist/$(PROJECT_NAME).js: index.js src/*
-	$(WEBPACK) --mode development --config $(WEBPACK_CLIENT_CONFIG) index.js --output dist/$(PROJECT_NAME).js
+	esbuild index.js --define:global=window --sourcemap --bundle --target=chrome58,firefox57,safari11,edge16 --outfile=dist/$(PROJECT_NAME).js
 
 dist/$(PROJECT_NAME).min.js: index.js src/*
-	$(WEBPACK) --mode production --optimize-minimize --config $(WEBPACK_CLIENT_CONFIG) index.js --output dist/$(PROJECT_NAME).min.js
+	esbuild index.js --define:global=window --bundle --minify --target=chrome58,firefox57,safari11,edge16 --outfile=dist/$(PROJECT_NAME).min.js
 
 dist/$(PROJECT_NAME).min.gz: dist/$(PROJECT_NAME).min.js
 	gzip --best -c dist/$(PROJECT_NAME).min.js > dist/$(PROJECT_NAME).min.gz
