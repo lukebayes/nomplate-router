@@ -54,9 +54,6 @@ dist/$(PROJECT_NAME).min.js: index.js src/*
 dist/$(PROJECT_NAME).min.gz: dist/$(PROJECT_NAME).min.js
 	gzip --best -c dist/$(PROJECT_NAME).min.js > dist/$(PROJECT_NAME).min.gz
 
-dist/express.js:
-	$(WEBPACK) --mode development --config $(WEBPACK_SERVER_CONFIG) express.js --output dist/express.js
-
 lint:
 	$(ESLINT) --config $(PROJECT_ROOT)/.eslintrc.json .
 
