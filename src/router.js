@@ -230,6 +230,9 @@ class Router {
     this._window = windowHelper(this, opt_win);
 
     if (opt_win) {
+      opt_win.addEventListener('popstate', (event) => {
+        this.execute(opt_win.location);
+      });
       this.execute(opt_win.location);
     } else {
       this.execute('/');
