@@ -109,7 +109,6 @@ function modifyWindowHistory(router, win) {
   function wrapper(original) {
     return function(state, title, url) {
       original.call(hist, state, title, url);
-      win.location.replace(url);
       router.execute(win.location);
     };
   };
