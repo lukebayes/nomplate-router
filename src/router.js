@@ -53,6 +53,11 @@ class Router {
     });
   }
 
+  hasRouteFor(method, url) {
+    const handlers = this._getMiddlewareFor(method, url);
+    return handlers && handlers.length > 0;
+  }
+
   _getErrorHandlers() {
   }
 

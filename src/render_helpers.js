@@ -61,6 +61,11 @@ function nearestAnchor(element) {
   return null;
 }
 
+function shouldTrapClick(router, win, element) {
+  return (element.host === win.location.host) &&
+    router.hasRouteFor('get', element.pathname);
+}
+
 /**
  * Trap all click operations from internal anchors so that they instead
  * get pushed into history and handled by the router.
@@ -78,7 +83,7 @@ function getClickTrapHandler(router, win) {
       return;
     }
 
-    if (element.host === win.location.host) {
+    if (shouldTrapClick(router, win, element)) {
       const pathname = element.pathname;
       event.preventDefault();
       event.stopImmediatePropagation();
@@ -149,4 +154,5 @@ module.exports = {
   modifyWindowHistory,
   urlFromString,
   windowHelper,
+  shouldTrapClick,
 };
