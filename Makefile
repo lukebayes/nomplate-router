@@ -40,16 +40,16 @@ test-w: ${NODE}
 test-debug: ${NODE}
 	${MOCHA} --inspect-brk
 
-build-module: index.js
+build-module: src/index.js
 
 publish: clean build
 	npm publish
 
-dist/$(PROJECT_NAME).js: index.js src/*
-	esbuild index.js --define:global=window --sourcemap --bundle --target=chrome58,firefox57,safari11,edge16 --outfile=dist/$(PROJECT_NAME).js
+dist/$(PROJECT_NAME).js: src/index.js src/*
+	esbuild src/index.js --define:global=window --sourcemap --bundle --target=chrome58,firefox57,safari11,edge16 --outfile=dist/$(PROJECT_NAME).js
 
-dist/$(PROJECT_NAME).min.js: index.js src/*
-	esbuild index.js --define:global=window --bundle --minify --target=chrome58,firefox57,safari11,edge16 --outfile=dist/$(PROJECT_NAME).min.js
+dist/$(PROJECT_NAME).min.js: src/index.js src/*
+	esbuild src/index.js --define:global=window --bundle --minify --target=chrome58,firefox57,safari11,edge16 --outfile=dist/$(PROJECT_NAME).min.js
 
 dist/$(PROJECT_NAME).min.gz: dist/$(PROJECT_NAME).min.js
 	gzip --best -c dist/$(PROJECT_NAME).min.js > dist/$(PROJECT_NAME).min.gz
