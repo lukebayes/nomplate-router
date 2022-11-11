@@ -10,7 +10,7 @@ PROJECT_NAME=nomplate-router
 
 # Nodejs
 # https://nodejs.org/dist/v10.9.0/node-v10.9.0-linux-x64.tar.xz
-NODE_VERSION=16.13.0
+NODE_VERSION=18.12.1
 NODE=lib/nodejs/bin/node
 NPM=lib/nodejs/bin/npm
 
