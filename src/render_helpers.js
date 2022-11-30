@@ -63,7 +63,7 @@ function nearestAnchor(element) {
 
 function shouldTrapClick(router, win, element) {
   return (element.host === win.location.host) &&
-    router.hasRouteFor('get', element.pathname);
+    router.hasRouteFor('get', element.href || element.pathname);
 }
 
 /**
@@ -84,11 +84,11 @@ function getClickTrapHandler(router, win) {
     }
 
     if (shouldTrapClick(router, win, element)) {
-      const pathname = element.pathname;
+      const url = element.href || element.pathname;
       event.preventDefault();
       event.stopImmediatePropagation();
 
-      win.history.pushState(null, null, pathname);
+      win.history.pushState(null, null, url);
 
       if (!router.suppressClickLogging) {
         console.log('NOTE: nomplate-router has captured and blocked an internal-path anchor click for:', element);
