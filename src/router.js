@@ -185,7 +185,19 @@ class Router {
   }
 
   /**
+   * Navigate to the provided path or location.
+   *
+   * Calling this function will push the provided url onto the history stack
+   * and then execute whatever handler is associated with the path.
+   */
+  navigate(urlPathOrLocation, opt_method) {
+	this.window.history.pushState({}, '', urlPathOrLocation);
+  }
+
+  /**
    * Execute middleware for the provided path and method.
+   *
+   * NOTE: This method will not update the history or the window.location
    */
   execute(urlPathOrLocation, opt_method) {
     // Transform a location, URL, href or path into a URL object.
