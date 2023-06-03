@@ -63,7 +63,8 @@ function nearestAnchor(element) {
 
 function shouldTrapClick(router, win, element) {
   return (element.host === win.location.host) &&
-    router.hasRouteFor('get', element.href || element.pathname);
+    (router.hasRouteFor('get', element.href || '') ||
+		router.hasRouteFor('get', element.pathname || ''));
 }
 
 /**
@@ -156,3 +157,4 @@ module.exports = {
   windowHelper,
   shouldTrapClick,
 };
+
