@@ -248,7 +248,12 @@ describe('Router Test', () => {
               setTimeout(() => {
                 handler();
               });
-            }
+            },
+            catch: (handler) => {
+              setTimeout(() => {
+                handler({message: 'fake-error'});
+              });
+            },
           }
         });
 
@@ -440,7 +445,8 @@ describe('Router Test', () => {
 
     // This is another custom view.
     function efghView(options) {
-      return `rendered efgh: ${options.efgh}`;
+      // This view throws every time.
+      throw new Error('Efgh view throws error');
     };
 
     function errorView(options) {
@@ -480,18 +486,28 @@ describe('Router Test', () => {
       instance.get('/ijkl', (req, res, next) => {
         next(new Error('Fake Failure'));
       });
+
+      instance.get('/efgh', (req, res, next) => {
+        res.render('efgh', {efgh: 5678});
+      });
     });
 
     it('allows registration of error handler', () => {
       instance.execute('/');
       assert.equal(root.length, 1);
       assert.equal(root[0], 'rendered abcd: 1234');
+    });
 
-      root = [];
-
+    it('renders an error', () => {
       instance.execute('/ijkl');
       assert.equal(root.length, 1);
       assert.equal(root[0], 'rendered error: Error: Fake Failure');
+    });
+
+    it('renders an error AFTER view throws', () => {
+      instance.execute('/efgh');
+      assert.equal(root.length, 1);
+      assert.equal(root[0], 'rendered error: Error: Efgh view throws error');
     });
   });
 });

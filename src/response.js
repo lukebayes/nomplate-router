@@ -22,8 +22,10 @@ class Response {
   }
 
   render(view, optLocals, optCallback) {
+    const result = this.routes.render(view, optLocals, optCallback);
+    // Do not end() the response until the view is successfully rendered.
     this.end();
-    return this.routes.render(view, optLocals, optCallback);
+    return result;
   }
 
   send(element) {

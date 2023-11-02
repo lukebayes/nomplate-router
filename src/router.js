@@ -244,12 +244,22 @@ class Router {
       if (opt_err) {
         handler(req, res, nextHandler, opt_err);
       } else if (handlerLen === 3) {
-        handler(req, res, nextHandler);
+        try {
+          handler(req, res, nextHandler);
+        } catch (err) {
+          // Forward the captured error to the nextHandler
+          nextHandler(err);
+          break;
+        }
         break;
       } else {
         isPromise = handler(req, res);
         if (isPromise && typeof(isPromise.then) === 'function') {
-          isPromise.then(nextHandler);
+          isPromise.catch((err) => {
+            // Handle promise errors by getting to the error handler
+            return this._executeNext(itr, req, res, err);
+          });
+          isPromise.then(nextHandler)
           break;
         }
       }
