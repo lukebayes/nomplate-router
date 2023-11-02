@@ -211,14 +211,25 @@ class Router {
     this._executeNext(itr, req, res);
   }
 
-  _executeNext(itr, req, res) {
+  _executeNext(itr, req, res, opt_err) {
     while (itr.hasNext()) {
       let isPromise = false;
       const route = itr.next();
 
       const nextHandler = (err) => {
         if (err) {
-          throw new Error('Not yet implemented!!!');
+          if (this._errorRoutes.length == 0) {
+            // Error routes are often configured like this:
+            // app.use((req, res, next, err) => {
+            //    res.render('error', {err});
+            // });
+            // As with other routes (or use statements), they will be 
+            // called in the order they are registered, until one closes
+            // the response by rendering or sending a result.
+            throw new Error('There must be at least one error route configured');
+          }
+          const errItr = new Iterator(this._errorRoutes);
+          return this._executeNext(errItr, req, res, err);
         }
 
         this._executeNext(itr, req, res);
@@ -226,11 +237,17 @@ class Router {
 
       // Set the route resolved params onto the request object.
       req.params = route.params;
-      if (route.handler.length === 3) {
-        route.handler(req, res, nextHandler);
+
+      const handler = route.handler;
+      const handlerLen = handler.length;
+
+      if (opt_err) {
+        handler(req, res, nextHandler, opt_err);
+      } else if (handlerLen === 3) {
+        handler(req, res, nextHandler);
         break;
       } else {
-        isPromise = route.handler(req, res);
+        isPromise = handler(req, res);
         if (isPromise && typeof(isPromise.then) === 'function') {
           isPromise.then(nextHandler);
           break;

@@ -429,4 +429,69 @@ describe('Router Test', () => {
       assert.equal(root[1], 'rendered: 5678');
     });
   });
+
+  describe('error routes', () => {
+    let instance, root;
+
+    // This is a custom view.
+    function abcdView(options) {
+      return `rendered abcd: ${options.abcd}`;
+    };
+
+    // This is another custom view.
+    function efghView(options) {
+      return `rendered efgh: ${options.efgh}`;
+    };
+
+    function errorView(options) {
+      return `rendered error: ${options.err}`;
+    }
+
+    // This is a custom renderer (what attaches the rendered views to a context).
+    function renderer(viewName, renderedView, rootContext) {
+      root.push(renderedView);
+    };
+
+    beforeEach(() => {
+      root = [];
+
+      instance = router({
+        // Register the custom renderer with the router.
+        // Could also choose to register with:
+        // instance.set('renderer', renderer);
+        renderer,
+      });
+
+      // Register the avaiable views with the router.
+      instance.set('views', {
+        abcd: abcdView,
+        efgh: efghView,
+        error: errorView,
+      });
+
+      instance.use((req, res, next, err) => {
+        res.render('error', {err});
+      });
+
+      instance.get('/', (req, res, next) => {
+        res.render('abcd', {abcd: 1234});
+      });
+
+      instance.get('/ijkl', (req, res, next) => {
+        next(new Error('Fake Failure'));
+      });
+    });
+
+    it('allows registration of error handler', () => {
+      instance.execute('/');
+      assert.equal(root.length, 1);
+      assert.equal(root[0], 'rendered abcd: 1234');
+
+      root = [];
+
+      instance.execute('/ijkl');
+      assert.equal(root.length, 1);
+      assert.equal(root[0], 'rendered error: Error: Fake Failure');
+    });
+  });
 });
