@@ -73,9 +73,9 @@ function shouldTrapClick(router, win, element) {
  */
 function getClickTrapHandler(router, win) {
   return function _clickTrapHandler(opt_event) {
-    const event = opt_event || win && win.event;
+    const event = opt_event || _win && _win.event;
     let element = event.target || event.srcElement;
-    const win = element.ownerDocument && element.ownerDocument.defaultView || win;
+    const win = element.ownerDocument && element.ownerDocument.defaultView || _win;
 
     element = nearestAnchor(element);
 
@@ -88,6 +88,15 @@ function getClickTrapHandler(router, win) {
       const url = element.href || element.pathname;
       event.preventDefault();
       event.stopImmediatePropagation();
+
+      if (event.ctrlKey) {
+        if (event.shiftKey) {
+          win.open(url, '_blank').focus();
+        } else {
+          win.open(url, '_target');
+        }
+        return;
+      }
 
       win.history.pushState(null, null, url);
 
