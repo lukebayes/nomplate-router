@@ -191,7 +191,15 @@ class Router {
    * and then execute whatever handler is associated with the path.
    */
   navigate(urlPathOrLocation, opt_method) {
-	this.window.history.pushState({}, '', urlPathOrLocation);
+    this.window.history.pushState({}, '', urlPathOrLocation);
+  }
+
+  back() {
+    this.window.history.back();
+  }
+
+  go(delta) {
+    this.window.history.go(delta);
   }
 
   /**
