@@ -161,6 +161,14 @@ class Router {
   }
 
   /**
+   * Register a handler for head methods.
+   */
+  head(pathOrName, ...handlerOrHandlers) {
+    this._pushRoute('head', pathOrName, handlerOrHandlers);
+    return this;
+  }
+
+  /**
    * Register a handler for post methods.
    */
   post(path, ...handlerOrHandlers) {
