@@ -20,6 +20,7 @@ const DEFAULT_OPTIONS = {
 class Router {
   constructor(options) {
     this._options = Object.assign(DEFAULT_OPTIONS, options || {});
+    this._locals = null;
     this._settings = {};
     this._routes = [];
     this._errorRoutes = [];
@@ -221,6 +222,9 @@ class Router {
     const req = new Request(this, url, this.window, opt_method);
     const res = new Response(this, url, this.window);
 
+    // Get pointer to Response.locals so that we can forwad it to views
+    this._locals = res.locals;
+
     // console.log('Router.execute with:', req.method, url.href);
     // Use an external iterator so that async handlers will work.
     const itr = new Iterator(this._getMiddlewareFor(req.method, url));
@@ -317,7 +321,7 @@ class Router {
       throw new Error(`No viewHandler registered at ${viewName}, need to provide it to routes.set('views', {"${viewName}": viewFunc});`);
     }
 
-    const locals = Object.assign({router: this, settings: this._settings}, optLocals);
+    const locals = Object.assign(Object.assign({router: this, settings: this._settings}, optLocals), this._locals);
     const renderedView = this._executeView(viewHandler(locals));
 
     return this.renderer(viewName, renderedView, this.rootContext);
