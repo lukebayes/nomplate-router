@@ -81,6 +81,15 @@ describe('Router Test', () => {
         done();
       });
 
+      it('removes plus signs from query param values', () => {
+        win.setUrl('https://abcd.com/abcd?part_number=abcd+efgh');
+        const routeHandler = sinon.spy((req, res) => {
+          assert.equal(req.query.part_number, 'abcd efgh');
+        });
+
+        instance.get('/abcd', routeHandler).listen(root, win);
+      });
+
       it('provides cookies, hostname, method to reqest', () => {
         win.setUrl('https://abcd.com/abcd?efgh=1234&ij%20kl=56%2078');
 

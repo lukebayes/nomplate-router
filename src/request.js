@@ -48,7 +48,7 @@ class Request {
       if (pair !== '') {
         const parts = pair.split('=');
         const key = (unescape(parts[0]) + '').trim();
-        const value = unescape(parts.slice(1).join('='));
+        const value = unescape(parts.slice(1).join('=').replace(/\+/g, ' ')).trim();
         result[key] = this._coerce(value);
       }
     });
