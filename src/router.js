@@ -203,6 +203,10 @@ class Router {
     this.window.history.pushState({}, '', urlPathOrLocation);
   }
 
+  redirect(urlPathOrLocation, opt_method) {
+    this.window.history.replaceState({}, '', urlPathOrLocation);
+  }
+
   back() {
     this.window.history.back();
   }

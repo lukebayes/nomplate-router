@@ -60,8 +60,7 @@ class Response {
 
   redirect(path) {
     this.end();
-    this.routes.execute(path);
-
+    this.routes.redirect(path);
     return this;
   }
 }
