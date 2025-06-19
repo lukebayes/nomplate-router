@@ -244,6 +244,11 @@ class Router {
       let isPromise = false;
       const route = itr.next();
 
+      if (res.isEnded) {
+        console.warn("Response has already ended, not executing route:", route.method, route.path);
+        return;
+      }
+
       const nextHandler = (err) => {
         if (err) {
           if (this._errorRoutes.length == 0) {
