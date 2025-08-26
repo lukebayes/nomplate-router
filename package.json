@@ -1,6 +1,6 @@
 {
   "name": "nomplate-router",
-  "version": "1.1.20",
+  "version": "1.1.21",
   "description": "Middleware for building rich client applications, especially with Nomplate ",
   "main": "index.js",
   "directories": {
